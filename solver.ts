@@ -36,6 +36,58 @@ let equivalences: { [name:string]:Equivalence } = {
     "Idempotent Laws (AND)":[
         [P,"A",P],
         P
+    ],
+    "Double Negation":[
+        P,
+        ["-",["-",P]]
+    ],
+    "Commutative Laws (AND)":[
+        [P,"A",Q],
+        [Q,"A",P]
+    ],
+    "Commutative Laws (OR)":[
+        [P,"V",Q],
+        [Q,"V",P]    
+    ],
+    "Associative Laws (AND)":[
+        [[P,"A",Q],"A",R],
+        [P,"A",[Q,"A",R]]
+    ],
+    "Associative Laws (OR)":[
+        [[P,"V",Q],"V",R],
+        [P,"V",[Q,"V",R]]
+    ],
+    "Distributive Laws (1)":[
+        [P,"V",[Q,"A",R]],
+        [[P,"V",Q],"A",[P,"V",R]]
+    ],
+    "Distributive Laws (2)":[
+        [P,"A",[Q,"V",R]],
+        [[P,"A",Q],"V",[P,"A",R]]
+    ],
+    "De Morgan’s Laws (1)":[
+        ["-",[P,"A",Q]],
+        [["-",P],"V",["-",Q]]
+    ],
+    "De Morgan’s Laws (2)":[
+        ["-",[P,"V",Q]],
+        [["-",P],"A",["-",Q]]
+    ],
+    "Absorption Laws (1)":[
+        [P,"V",[P,"A",Q]],
+        P
+    ],
+    "Absorption Laws (2)":[
+        [P,"A",[P,"V",Q]],
+        P
+    ],
+    "Implication Simplification":[
+        [P,"->",Q],
+        [["-",P],"V",Q]
+    ],
+    "Contrapositive":[
+        [P,"->",Q],
+        [["-",Q],"->",["-",P]]
     ]
 }
 
