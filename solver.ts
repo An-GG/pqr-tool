@@ -7,6 +7,7 @@ type Proposition = GeneralProposition<string>
 
 
 let source:Proposition = ["p", "->", "q"];
+let source2:Proposition = ["p", "A", "p"];
 let target:Proposition = [["-", "q"], "->", ["-", "p"]];
 
 
@@ -21,7 +22,6 @@ let target:Proposition = [["-", "q"], "->", ["-", "p"]];
 const P = Symbol("P");
 const Q = Symbol("Q");
 const R = Symbol("R");
-function isLogicalSymbol(x) { return (x == P || x == Q || x == R); }
 
 // An equivalence is a set of abstract propositions that can be legally converted between each other
 type Equivalence = AbstractProposition[]
@@ -82,7 +82,7 @@ function _checkPropositionMatch_helper(x:Proposition, eq:AbstractProposition, sy
     
     // An abstract base symbol matches any proposition
     // Also, store the associated proposition
-    if (E_isBaseSymbol) { symbolProps[eq as LogicalSymbol] = x; return true; }
+    if (E_isBaseSymbol) { symbolProps[eq as symbol] = x; return true; }
     // If input is some base variable, but abstract is more complex, symbol cannot match
     if (X_isBaseSymbol) { throw new Error("Proposition is a base variable but equivalence is more complex."); }
 
@@ -99,12 +99,13 @@ function _checkPropositionMatch_helper(x:Proposition, eq:AbstractProposition, sy
 
     if (eq[1] != x[1]) { throw new Error("Proposition and equivalence operations do not match."); }
 
-
-
+    return true;
 }
 
 
 
 
-// Look out for tokens that you can swap
+
+//try { checkPropositionMatch(source, [P,"A",P]); } catch(e) { console.log(e); }
+try { checkPropositionMatch(source2, [P,"A",P]); } catch(e) { console.log(e); }
 
