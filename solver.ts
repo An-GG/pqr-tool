@@ -1,3 +1,5 @@
+let logStack = false;
+
 type GeneralProposition<T> = T | [GeneralProposition<T>, PropOp, GeneralProposition<T>] | ["-", GeneralProposition<T>]
 
 type PropOp = "->" | "A" | "V"
@@ -137,14 +139,21 @@ function areEquivalentSymbols(a:Proposition, b:Proposition): boolean {
     return (JSON.stringify(a) == JSON.stringify(b));
 }
 
+// Check if an equivalence can be used to transform a proposition
+function canUseEquivalence(p:Proposition, e:Equivalence): true | string {
+    try { if (checkPropositionMatch(p, e[0]) == true) { return true; } else { 
+            throw new Error("checkMatch returned false instead of throwing"); 
+    } } catch(e) { return (e as Error).message + (logStack ? "\n"+(e as Error).stack : "") }
+}
 
-// check if an abstract proposition is a match for this specific proposition
+
+// check if a certain abstract proposition is a match for a certain specific proposition
 // throw errors instead of returning false to get info about what doesnt match
-type SymbolProps = { P:Proposition[],Q:Proposition[],R:Proposition[] }
+type SymbolProps = { [P]:Proposition[],[Q]:Proposition[],[R]:Proposition[] }
 function checkPropositionMatch(x:Proposition, eq:AbstractProposition): boolean {
     // Create new empty object to keep track of what abstract symbol a proposition is assigned to ensure 
     // the ones with the same one are identical
-    let symbolProps:SymbolProps = { P:[], Q:[], R:[] };    
+    let symbolProps:SymbolProps = { [P]:[], [Q]:[], [R]:[] };    
     let helper_result = _checkPropositionMatch_helper(x, eq, symbolProps);
     
     // Make sure all are equal within symbol
@@ -168,11 +177,13 @@ function _checkPropositionMatch_helper(x:Proposition, eq:AbstractProposition, sy
     
     // An abstract base symbol matches any proposition
     // Also, store the associated proposition
-    if (E_isBaseSymbol) { symbolProps[eq as symbol] = x; return true; }
+
+    if (E_isBaseSymbol) { symbolProps[eq as symbol].push(x); return true; }
     // If input is some base variable, but abstract is more complex, symbol cannot match
     if (X_isBaseSymbol) { throw new Error("Proposition is a base variable but equivalence is more complex."); }
 
-    let E_isNeg = eq[0] == '-';
+
+    let E_isNeg = typeof eq[0] == 'string' && eq[0] == '-';
     let X_isNeg = x[0] == '-';
 
     // If both are negators, recurse with new propositions without the neg
@@ -189,9 +200,24 @@ function _checkPropositionMatch_helper(x:Proposition, eq:AbstractProposition, sy
 }
 
 
+function getLegalEquivalences(prop:Proposition):string[] {
+    let legal = [];
+    for (let n in equivalences) {
+        let result = canUseEquivalence(prop, equivalences[n]);
+        if (result == true) {
+            legal.push(n);
+        } else {
+            //legal.push(n + "   " + result)
+        }
+    }
+    return legal;
+}
+
 
 
 
 //try { checkPropositionMatch(source, [P,"A",P]); } catch(e) { console.log(e); }
-try { checkPropositionMatch(source2, [P,"A",P]); } catch(e) { console.log(e); }
+//try { checkPropositionMatch(source2, [P,"A",P]); } catch(e) { console.log(e); }
 
+let [p, q, r] = ["p", "q", "r"];
+console.log(getLegalEquivalences([[p,"V",["-",p]],"->",["-",[q,"V",["-",q]]]]));
