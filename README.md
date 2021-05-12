@@ -1,6 +1,6 @@
 # pqr-tool
 
-### low line-count tool to play around with discrete math propositions
+low line-count tool to play around with discrete math propositions
 
 Setup: clone & run `npm i`
 
