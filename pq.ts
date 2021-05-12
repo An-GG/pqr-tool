@@ -10,9 +10,9 @@ function table (in_set:boolean[]): {} {
         express(p),
         express(q),
         express(r),
-        express([p,"V",q]),
-        express([p,"A",q]),
-        express([[p,"V",q],"->",[p,"A",q]])
+        express([p,"->",q]),
+        express([["-",p],"->",r]),
+        express([[p,"->",q],"A",[["-",p],"->",r]])
     ].map(x => x ? "T" : "F");
 
     strMode = true;
@@ -21,9 +21,9 @@ function table (in_set:boolean[]): {} {
         express(p),
         express(q),
         express(r),
-        express([p,"V",q]),
-        express([p,"A",q]),
-        express([[p,"V",q],"->",[p,"A",q]])
+        express([p,"->",q]),
+        express([["-",p],"->",r]),
+        express([[p,"->",q],"A",[["-",p],"->",r]])
     ];
 
     let out = {};
@@ -57,9 +57,8 @@ let OP : { [k:string]:(a:boolean, b:boolean)=>boolean } = {
 }
 
 
-
 type PropOp = "->" | "A" | "V"
-type Proposition = boolean | [Proposition, PropOp, Proposition]
+type Proposition = boolean | [Proposition, PropOp, Proposition] | ["-", Proposition]
 type PropString = string | [PropString, PropOp, PropString]
 
 
@@ -70,6 +69,9 @@ function express_str(p:PropString):string {
     if (typeof p == "string") {
         return p;
     }
+    if (p[0] == "-") {
+        return "-"+express_str(p[1]);
+    }
     return "( " + express_str(p[0]) + " " + p[1] + " " + express_str(p[2])+" )";
 }
 
@@ -79,6 +81,9 @@ function express(p:Proposition):boolean {
 
     if (typeof p == "boolean") {
         return p;
+    }
+    if (p[0] == "-") {
+        return !express(p[1]);
     }
     switch (p[1]) {
         case "->": return OP.imp(express(p[0]),express(p[2]));
