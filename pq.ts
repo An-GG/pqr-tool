@@ -5,27 +5,33 @@ function table (in_set:boolean[]): {} {
     let [p, q, r] = in_set;
     let letters = ["p", "q", "r"];
 
-    strMode = false;
-    let out_set = [
-        express(p),
-        express(q),
-        express(r),
-        express([p,"->",q]),
-        express([["-",p],"->",r]),
-        express([[p,"->",q],"A",[["-",p],"->",r]])
-    ].map(x => x ? "T" : "F");
+    
+    let out_set = [];
+    let key_set: any[] = [];
+    for (let i = 0; i < 2; i++) {
+        strMode = i == 1;
+        if (strMode) { [p, q, r] = letters as any; }
 
-    strMode = true;
-    [p, q, r] = letters as any;
-    let key_set: any[] = [
-        express(p),
-        express(q),
-        express(r),
-        express([p,"->",q]),
-        express([["-",p],"->",r]),
-        express([[p,"->",q],"A",[["-",p],"->",r]])
-    ];
 
+
+        // Write Expressions Here
+        let set = [
+            express(p),
+            express(q),
+            express(r),
+            express([p,"V",["-",p]]),
+            express(["-",[q,"V",["-",q]]]),
+            express([[p,"V",["-",p]],"->",["-",[q,"V",["-",q]]]])
+        ]
+
+
+
+
+        if (strMode) { key_set = set; } else { out_set = set; }
+    }
+
+    out_set = out_set.map(x => x ? "T" : "F");
+    
     let out = {};
     for (let i=0; i<key_set.length; i++) {
         out[key_set[i]] = out_set[i];
