@@ -1,7 +1,6 @@
 import { printTable } from "console-table-printer";
 
 let nvars = 3;
-
 function table (in_set:boolean[]): {} {
     let [p, q, r] = in_set;
     let letters = ["p", "q", "r"];
