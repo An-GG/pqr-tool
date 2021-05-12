@@ -4,14 +4,9 @@ type PropOp = "->" | "A" | "V"
 type Proposition = GeneralProposition<string>
 
 
-
-
 let source:Proposition = ["p", "->", "q"];
 let source2:Proposition = ["p", "A", "p"];
 let target:Proposition = [["-", "q"], "->", ["-", "p"]];
-
-
-
 
 
 /* 
@@ -28,6 +23,7 @@ type Equivalence = AbstractProposition[]
 type LogicalSymbol = (typeof P) | (typeof Q) | (typeof R)
 type AbstractProposition = GeneralProposition<LogicalSymbol>
 
+// Define basic equivalencies
 let equivalences: { [name:string]:Equivalence } = {
     "Idempotent Laws (OR)":[
         [P,"V",P],
@@ -90,7 +86,45 @@ let equivalences: { [name:string]:Equivalence } = {
         [["-",Q],"->",["-",P]]
     ]
 }
+// Add reverse possibilities
+for (let name in equivalences) {
+    let e = equivalences[name];
+    
+    // Determine if it is reversable 
+    // If the number of symbols decreases, not reversible
+    let symCount = [];
+    for (let p of e) {
+        symCount.push(countAbstractSymbols(p).unique.length);
+    }
+    if (symCount[1] == symCount[0]) {
+        // No information is lost, is reversible
+        let newname = "Reverse " + name;
+        equivalences[newname] = [
+            equivalences[name][1],
+            equivalences[name][0]
+        ]
+    }
+}
 
+
+function countAbstractSymbols(prop:AbstractProposition):{ total:number, unique:LogicalSymbol[] } {
+    if (typeof prop == 'symbol') { return { total:1, unique:[prop] }; }
+    let sum = 0;
+    let unique = [];
+    for (let s of prop) {
+        if (typeof s == 'object') {
+            let inner = countAbstractSymbols(s);
+            sum += inner.total;
+            for (let u of inner.unique) {
+                if (!unique.includes(u)) { unique.push(u); }
+            }
+        } else if (typeof s == 'symbol') {
+            sum += 1;
+            if (!unique.includes(s)) { unique.push(s); }
+        }
+    }
+    return { total:sum, unique:unique };
+}
 
 
 /* 
