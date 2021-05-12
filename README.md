@@ -8,17 +8,12 @@ Setup: clone & run `npm i`
 
 ### Express a proposition using `express()`
 ```ts
-let out_set = [
+let set = [
     // (p∨q)→(p∧q)
     express([[p,"V",q],"->",[p,"A",q]]),
 ]
 ```
-Due to some funny business you also need to copy paste this into an array right under it called key_set
-```ts
-let key_set: any[] = [
-    express([[p,"V",q],"->",[p,"A",q]]),
-]
-```
+
 
 
 

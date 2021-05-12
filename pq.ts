@@ -110,7 +110,7 @@ function runner() {
         let s = i.toString(2);
         while (s.length < nvars) { s = "0" + s }
         
-        let b_arr = s.split("").map(x => x == "1");
+        let b_arr = s.split("").map(x => x == "0");
         let r = table(b_arr);
         results.push(r);
     }
