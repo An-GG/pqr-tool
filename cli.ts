@@ -70,7 +70,7 @@ function cli() {
     });
 
 }
-cli();
+//cli();
 
 
 
@@ -109,7 +109,7 @@ function getSubproposition(p:Proposition, n:PartitionSelection):Proposition {
     }
 }
 
-function express_str(p:Proposition):string {
+export function express_str(p:Proposition):string {
     if (typeof p == 'string') { return p; }
     if (typeof p[0] == 'string' && p[0] == '-') { return "-"+express_str(p[1]); }
     return "( " + express_str(p[0]) + " " + p[1] + " " + express_str(p[2])+" )";

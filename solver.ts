@@ -1,3 +1,5 @@
+import { express_str } from "./cli";
+
 let logStack = false;
 
 export type GeneralProposition<T> = T | [GeneralProposition<T>, PropOp, GeneralProposition<T>] | ["-", GeneralProposition<T>]
@@ -220,4 +222,6 @@ function getLegalEquivalences(prop:Proposition):string[] {
 //try { checkPropositionMatch(source2, [P,"A",P]); } catch(e) { console.log(e); }
 
 let [p, q, r] = ["p", "q", "r"];
-console.log(getLegalEquivalences([[p,"V",["-",p]],"->",["-",[q,"V",["-",q]]]]));
+let test:Proposition = [[p,"V",["-",p]],"->",["-",[q,"V",["-",q]]]];
+console.log(express_str(test));
+console.log(getLegalEquivalences(test));
