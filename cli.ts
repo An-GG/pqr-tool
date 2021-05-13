@@ -1,6 +1,77 @@
 import { Proposition } from "./solver";
+import keypress from 'keypress';
 
-let target:Proposition = [["-", "q"], "->", ["-", "p"]];
+let target:Proposition = [ [["-", "q"], "->", ["-", "p"]], "->", ["p", "A", "p"]];
+
+
+
+/**
+ * Basic Interface:
+ * - Use arrows to change proposition selected
+ *  <- -> adjust working bit
+ *  ^ v   adjust depth
+ */
+function cli() {
+    let selection:PartitionSelection = [];
+    let selected:Proposition = target; 
+    function nomove() { throw new Error("Can't move in that direction."); }
+    function moveSelect(n:number, axis:"|"|"-") {
+        let newS:PartitionSelection = JSON.parse(JSON.stringify(selection));
+        if (axis == "-") {
+            if (selection.length == 0) { nomove(); }
+            newS[newS.length - 1]+=n;
+        } else {
+            let newlen = selection.length + n;
+            if (newlen < 0) { nomove(); }
+            if (newlen < selection.length) {
+                while (newS.length > newlen) {
+                    newS.pop();
+                }
+            } else {
+                while (newS.length < newlen) {
+                    newS.push(0);
+                }
+            }
+        }
+        // Do validity check
+        try { selected = getSubproposition(target, newS); selection = newS; } catch(e) {
+            nomove();
+        }
+    }
+    function printSelection() {
+        let selectedText = express_str(getSubproposition(target, selection));
+        let around = express_str_around(target, selection);
+        (process.stdout as any).clearLine();
+        process.stdout.cursorTo(0);
+        process.stdout.write(   "\x1b[0m\x1b[1m\x1b[37m" + around[0] + 
+                                "\x1b[0m\x1b[1m\x1b[32m" + selectedText + 
+                                "\x1b[0m\x1b[1m\x1b[37m" + around[1]);
+    }
+
+    process.stdin.setRawMode(true);
+    process.stdin.resume();
+    keypress(process.stdin);
+    printSelection();
+
+    process.stdin.on('keypress', function(ch, key) {
+        // Exit with Ctrl-C
+        if (key && key.ctrl && key.name == 'c') { process.stdin.pause(); }
+
+        try {
+            switch (key.name) {
+                case "left": moveSelect(-1, "-"); break;
+                case "right": moveSelect(1, "-"); break;
+                case "up": moveSelect(1, "|"); break;
+                case "down": moveSelect(-1, "|"); break;
+            }
+        } catch(e) {}
+
+        printSelection();
+    });
+
+}
+cli();
+
 
 
 /** 
@@ -43,15 +114,15 @@ function express_str(p:Proposition):string {
     if (typeof p[0] == 'string' && p[0] == '-') { return "-"+express_str(p[1]); }
     return "( " + express_str(p[0]) + " " + p[1] + " " + express_str(p[2])+" )";
 }
-function express_str_around(p:Proposition, target:PartitionSelection):string[] {
+function express_str_around(p:Proposition, selection:PartitionSelection):string[] {
     let out = ["",""];
-    if (target.length > 0) {
-        let aroundForInner = express_str_around(getSubproposition(p, [target[0]]), target.slice(1));
+    if (selection.length > 0) {
+        let aroundForInner = express_str_around(getSubproposition(p, [selection[0]]), selection.slice(1));
         if (typeof p[0] == 'string' && p[0] == '-') {
             out[0] = "-" + aroundForInner[0];
             out[1] = aroundForInner[1];
         } else {
-            if (target[0] == 0) {
+            if (selection[0] == 0) {
                 out[0] = "( " + aroundForInner[0];
                 out[1] = aroundForInner[1]+" "+p[1]+" "+express_str(p[2])+" )";
             } else {
