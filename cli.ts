@@ -11,43 +11,6 @@ let target:Proposition = [["-", "q"], "->", ["-", "p"]];
  * the 0th proposition, then either 0 or 1, etc
  */
 type PartitionSelection = number[]
-function partitionedExpression(p:Proposition,n:PartitionSelection): string[] {
-    let txt_before = "";
-    let txt_main = "";
-    let txt_after = "";
-
-    let selectedProp = p;
-    for (let s of n) {
-        if (typeof selectedProp == 'string') {
-            throw new Error("Proposition is a base symbol and has no subpropositions.");
-        }
-        if (typeof selectedProp[0] == 'string' && selectedProp[0] == '-') {
-            if (s == 0) {
-                txt_before += '-';
-                txt_after = '' + txt_after;
-                selectedProp = selectedProp[1];
-            } else {
-                throw new Error("Negator proposition has only 1 subproposition at index 0.");
-            }
-        }
-        if (s == 0 || s == 1) {
-            if (s == 0) {
-                txt_before = txt_before + "( ";
-                txt_after = " " + selectedProp[1] + " " + express_str(selectedProp[2] as any) + " )" + txt_after;
-                selectedProp = selectedProp[0];
-            } else {
-                txt_before = txt_before + "( " + express_str(selectedProp[0] as any) + " " + selectedProp[1] + " ";
-                txt_after = " )" + txt_after;
-                selectedProp = selectedProp[2];
-            }
-        } else {
-            throw new Error("Requested subproposition out of range.");
-        }
-    }
-
-    txt_main = express_str(selectedProp);
-    return [txt_before, txt_main, txt_after];
-}
 
 function countSubpropositions(p:Proposition):number {
     if (typeof p == 'string') { return 0; }
@@ -76,10 +39,26 @@ function getSubproposition(p:Proposition, n:PartitionSelection):Proposition {
 }
 
 function express_str(p:Proposition):string {
-    console.log(typeof p);
     if (typeof p == 'string') { return p; }
     if (typeof p[0] == 'string' && p[0] == '-') { return "-"+express_str(p[1]); }
     return "( " + express_str(p[0]) + " " + p[1] + " " + express_str(p[2])+" )";
 }
-
-console.log(partitionedExpression(target, [0,0])); 
+function express_str_around(p:Proposition, target:PartitionSelection):string[] {
+    let out = ["",""];
+    if (target.length > 0) {
+        let aroundForInner = express_str_around(getSubproposition(p, [target[0]]), target.slice(1));
+        if (typeof p[0] == 'string' && p[0] == '-') {
+            out[0] = "-" + aroundForInner[0];
+            out[1] = aroundForInner[1];
+        } else {
+            if (target[0] == 0) {
+                out[0] = "( " + aroundForInner[0];
+                out[1] = aroundForInner[1]+" "+p[1]+" "+express_str(p[2])+" )";
+            } else {
+                out[0] = "( "+express_str(p[0])+" "+p[1]+" "+aroundForInner[0];
+                out[1] = aroundForInner[1] + " )";
+            }
+        }
+    }
+    return out;
+}
