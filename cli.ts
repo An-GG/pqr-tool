@@ -70,7 +70,7 @@ function cli() {
     });
 
 }
-//cli();
+cli();
 
 
 

@@ -17,11 +17,12 @@ function table (in_set:boolean[]): {} {
         // Write Expressions Here
         let set = [
             express(p),
-            express(q),
-            express(r),
-            express([p,"V",["-",p]]),
-            express(["-",[q,"V",["-",q]]]),
-            express([[p,"V",["-",p]],"->",["-",[q,"V",["-",q]]]])
+            express([q,"V",r]),
+            express([p,"->",[q,"V",r]]),
+            
+            express([["-",q],"A",["-",r]]),
+            express(["-",p]),
+            express([[["-",q],"A",["-",r]],"V",p]),
         ]
 
 
