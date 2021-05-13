@@ -1,9 +1,9 @@
 let logStack = false;
 
-type GeneralProposition<T> = T | [GeneralProposition<T>, PropOp, GeneralProposition<T>] | ["-", GeneralProposition<T>]
+export type GeneralProposition<T> = T | [GeneralProposition<T>, PropOp, GeneralProposition<T>] | ["-", GeneralProposition<T>]
 
-type PropOp = "->" | "A" | "V"
-type Proposition = GeneralProposition<string>
+export type PropOp = "->" | "A" | "V"
+export type Proposition = GeneralProposition<string>
 
 
 let source:Proposition = ["p", "->", "q"];
