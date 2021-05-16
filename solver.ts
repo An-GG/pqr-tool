@@ -2,7 +2,9 @@ import { express_str } from "./cli";
 
 let logStack = false;
 
-export type GeneralProposition<T> = T | [GeneralProposition<T>, PropOp, GeneralProposition<T>] | ["-", GeneralProposition<T>]
+export type GeneralProposition<T> = T | [GeneralProposition<T>, PropOp, GeneralProposition<T>] | ["-", GeneralProposition<T>] | TruthProposition
+
+export type TruthProposition = typeof TRUE | typeof FALSE
 
 export type PropOp = "->" | "A" | "V"
 export type Proposition = GeneralProposition<string>
@@ -22,8 +24,8 @@ export const P = Symbol("P");
 export const Q = Symbol("Q");
 export const R = Symbol("R");
 
-export const TRUE = Symbol("TRUE");
-export const FALSE = Symbol("FALSE");
+export const TRUE = ["","TRUE",""];
+export const FALSE = ["","FALSE",""];
 
 // An equivalence is a set of abstract propositions that can be legally converted between each other
 export type Equivalence = AbstractProposition[]
@@ -32,6 +34,30 @@ export type AbstractProposition = GeneralProposition<LogicalSymbol>
 
 // Define basic equivalencies
 export let equivalences: { [name:string]:Equivalence } = {
+    "Contradiction": [
+        [P,"A",["-",P]],
+        FALSE
+    ],
+    "Excluded Middle":[
+        [P,"V",["-",P]],
+        TRUE
+    ],
+    "Identity Laws (AND)":[
+        [P,"A",TRUE],
+        P
+    ],
+    "Identity Laws (OR)":[
+        [P,"V",FALSE],
+        P
+    ],
+    "Domination Laws (OR)":[
+        [P,"V",TRUE],
+        TRUE
+    ],
+    "Domination Laws (AND)":[
+        [P,"A",FALSE],
+        FALSE
+    ],
     "Idempotent Laws (OR)":[
         [P,"V",P],
         P
