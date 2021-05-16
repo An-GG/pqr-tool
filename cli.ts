@@ -1,7 +1,7 @@
-import { AbstractProposition, equivalences, getLegalEquivalences, performEquivalenceSwap, Proposition } from "./solver";
+import { AbstractProposition, equivalences, GeneralProposition, getLegalEquivalences, performEquivalenceSwap, Proposition } from "./solver";
 import keypress from 'keypress';
 
-let activeProp:Proposition = [ [["-", "q"], "->", ["-", "p"]], "->", ["p", "A", "p"]];
+let activeProp:Proposition = [ ["p","->","q"],"V",["p","->","r"] ] ;
 
 
 
@@ -123,7 +123,8 @@ function cli() {
                 let newprop = performEquivalenceSwap(selectedProp, eq);
                 // Swap Selection
                 let swapped = swapSubpropositionWith(activeProp, selection, newprop);
-
+                console.log(activeProp);
+                console.log(swapped);
                 let before = express_str_around(activeProp, selection);
                 let after = express_str_around(swapped, selection);
                 
@@ -136,6 +137,7 @@ function cli() {
 
                 console.log("Active Proposition:\n")
                 printSelection();
+                
 
             }
         }
@@ -162,6 +164,20 @@ function countSubpropositions(p:Proposition):number {
     return 2;
 }
 
+type BasicPropType = "BASE_SYMBOL" | "AXB" | "XA"
+function getPropositionType(p:GeneralProposition<symbol | string>): BasicPropType {
+    if (typeof p == 'string' || typeof p == 'symbol') {
+        return "BASE_SYMBOL";
+    }
+    if (typeof p[0] == 'string' && p[0] == '-') { 
+        return "XA";
+    }
+    if (p.length == 3 && typeof p[1] == 'string') {
+        return "AXB";
+    }
+    throw new Error('Unidentifiable: ' + JSON.stringify(p));
+}
+
 function getSubproposition(p:Proposition, n:PartitionSelection):Proposition {
     if (n.length == 0) { return p; }
     if (typeof p == 'string') {
@@ -182,19 +198,30 @@ function getSubproposition(p:Proposition, n:PartitionSelection):Proposition {
     }
 }
 
-function swapSubpropositionWith(p:Proposition, at:PartitionSelection, swap:Proposition): Proposition {
-    let newprop: typeof p = JSON.parse(JSON.stringify(p));
-    let swapref = newprop;
-    if (at.length == 0) {
-        return swap;
-    }
-    let last = at.pop();
-    if (at.length > 1) {
-        swapref = getSubproposition(p, at);
+function swapSubpropositionWith(prop:Proposition, at:PartitionSelection, swap:Proposition): Proposition {
+    console.log(at);
+    console.log(swap);
+    if (at.length == 0) { return swap; }
+    let p : typeof prop = JSON.parse(JSON.stringify(prop));
+    let ptype = getPropositionType(p);
+    if (ptype == 'BASE_SYMBOL') {
+        throw new Error("Proposition is a base symbol and has no subpropositions.");
+    } else if (ptype == 'AXB') {
+        if (at[0] == 0) {
+            at.shift();
+            return [swapSubpropositionWith(p[0], at, swap), p[1], p[2]] as any;
+        } else if (at[0] == 1) {
+            at.shift();
+            return [p[0], p[1], swapSubpropositionWith(p[2], at, swap)] as any;
+        }
     } else {
-        (swapref[last] as any) = swap;
+        if (at[0] == 0) {
+            at.shift();
+            return [p[0], swapSubpropositionWith(p[1], at, swap)] as any;
+        } else if (at[0] == 1) {
+            throw new Error("Negator proposition has only 1 subproposition at index 0.");
+        }
     }
-    return newprop;
 }
 
 
