@@ -1,7 +1,7 @@
-import { Proposition } from "./solver";
+import { AbstractProposition, equivalences, getLegalEquivalences, performEquivalenceSwap, Proposition } from "./solver";
 import keypress from 'keypress';
 
-let target:Proposition = [ [["-", "q"], "->", ["-", "p"]], "->", ["p", "A", "p"]];
+let activeProp:Proposition = [ [["-", "q"], "->", ["-", "p"]], "->", ["p", "A", "p"]];
 
 
 
@@ -12,8 +12,7 @@ let target:Proposition = [ [["-", "q"], "->", ["-", "p"]], "->", ["p", "A", "p"]
  *  ^ v   adjust depth
  */
 function cli() {
-    let selection:PartitionSelection = [];
-    let selected:Proposition = target; 
+    
     function nomove() { throw new Error("Can't move in that direction."); }
     function moveSelect(n:number, axis:"|"|"-") {
         let newS:PartitionSelection = JSON.parse(JSON.stringify(selection));
@@ -34,13 +33,19 @@ function cli() {
             }
         }
         // Do validity check
-        try { selected = getSubproposition(target, newS); selection = newS; } catch(e) {
+        try { selectedProp = getSubproposition(activeProp, newS); selection = newS; } catch(e) {
             nomove();
         }
     }
+    function setLineTo(s:string) {
+        (process.stdout as any).clearLine();
+        process.stdout.cursorTo(0);
+        process.stdout.write(s);
+    }
+
     function printSelection() {
-        let selectedText = express_str(getSubproposition(target, selection));
-        let around = express_str_around(target, selection);
+        let selectedText = express_str(getSubproposition(activeProp, selection));
+        let around = express_str_around(activeProp, selection);
         (process.stdout as any).clearLine();
         process.stdout.cursorTo(0);
         process.stdout.write(   "\x1b[0m\x1b[1m\x1b[37m" + around[0] + 
@@ -48,25 +53,79 @@ function cli() {
                                 "\x1b[0m\x1b[1m\x1b[37m" + around[1]);
     }
 
+    function printEquivalences() {
+        console.table(getLegalEquivalences(selectedProp));
+    }
+
+    
+    
+
+
+    let currentMode : "SELECT_PROP" | "SELECT_EQ" = "SELECT_PROP";
+    let selection:PartitionSelection = [];
+    let selectedProp:Proposition = activeProp; 
+    let selectedEqString = "";
+    
     process.stdin.setRawMode(true);
     process.stdin.resume();
     keypress(process.stdin);
     printSelection();
-
     process.stdin.on('keypress', function(ch, key) {
         // Exit with Ctrl-C
         if (key && key.ctrl && key.name == 'c') { process.stdin.pause(); }
+        
+        // There could be 1 of 2 modes: 
+        // 1. selecting proposition
+        // 2. selecting equivalence to use
+        if (currentMode == "SELECT_PROP") {
+            try {
+                switch (key.name) {
+                    case "left": moveSelect(-1, "-"); break;
+                    case "right": moveSelect(1, "-"); break;
+                    case "up": moveSelect(1, "|"); break;
+                    case "down": moveSelect(-1, "|"); break;
+                }
+                printSelection();
+            } catch(e) {}
 
-        try {
-            switch (key.name) {
-                case "left": moveSelect(-1, "-"); break;
-                case "right": moveSelect(1, "-"); break;
-                case "up": moveSelect(1, "|"); break;
-                case "down": moveSelect(-1, "|"); break;
+            if (key.name == "enter" || key.name == "return") {
+                // Selected current proposition
+                console.log("\n\nSelected:");
+                printSelection();
+                console.log("\n");
+                currentMode = "SELECT_EQ";
+                selectedEqString = "";
+
+                console.log("Select Equivalence:");
+                printEquivalences();
+                console.log("\n");
             }
-        } catch(e) {}
+            
+        } else {
+            let nums = "1234567890";
+            if (ch && nums.includes(ch)) {
+                selectedEqString += ch;
+                setLineTo(selectedEqString);
+            } else if (key && key.name == "backspace") {
+                if (selectedEqString.length > 0) {
+                    selectedEqString = selectedEqString.substring(0, selectedEqString.length - 1);
+                }
+                setLineTo(selectedEqString);
+            } else if (key && key.name == "return") {
+                // Selected Eq
+                let eqN = parseInt(selectedEqString);
+                let legalEqName = getLegalEquivalences(selectedProp)[eqN];
+                console.log("\n\nSelected: "+selectedEqString+" "+legalEqName);
+                
+                let eq = equivalences[legalEqName];
+                console.log(express_abstract_equivalence_str(eq[0]) + " = " + express_abstract_equivalence_str(eq[1]) + "\n");
 
-        printSelection();
+                let newprop = performEquivalenceSwap(selectedProp, eq);
+                console.log(newprop);
+                express_str(newprop);
+            }
+        }
+        
     });
 
 }
@@ -132,4 +191,19 @@ function express_str_around(p:Proposition, selection:PartitionSelection):string[
         }
     }
     return out;
+}
+function convert_abstractprop_stringprop(p:AbstractProposition): Proposition {
+    if (typeof p == 'string') { return p; }
+    if (typeof p == 'symbol') { return p.description; } 
+    let normal = [];
+    for (let item of p) {
+        if (typeof item == 'string') { normal.push(item); }
+        if (typeof item == 'symbol') { normal.push(item.description); } 
+        if (typeof item == 'object') { normal.push(express_abstract_equivalence_str(item)); }
+    }
+    return normal as any;
+}
+
+export function express_abstract_equivalence_str(p:AbstractProposition):string {
+    return express_str(convert_abstractprop_stringprop(p));
 }

@@ -18,17 +18,20 @@ let target:Proposition = [["-", "q"], "->", ["-", "p"]];
  */
 
 // You only need 3 logical symbols to define all basic eqivalences
-const P = Symbol("P");
-const Q = Symbol("Q");
-const R = Symbol("R");
+export const P = Symbol("P");
+export const Q = Symbol("Q");
+export const R = Symbol("R");
+
+export const TRUE = Symbol("TRUE");
+export const FALSE = Symbol("FALSE");
 
 // An equivalence is a set of abstract propositions that can be legally converted between each other
-type Equivalence = AbstractProposition[]
-type LogicalSymbol = (typeof P) | (typeof Q) | (typeof R)
-type AbstractProposition = GeneralProposition<LogicalSymbol>
+export type Equivalence = AbstractProposition[]
+export type LogicalSymbol = (typeof P) | (typeof Q) | (typeof R)
+export type AbstractProposition = GeneralProposition<LogicalSymbol>
 
 // Define basic equivalencies
-let equivalences: { [name:string]:Equivalence } = {
+export let equivalences: { [name:string]:Equivalence } = {
     "Idempotent Laws (OR)":[
         [P,"V",P],
         P
@@ -101,6 +104,7 @@ for (let name in equivalences) {
         symCount.push(countAbstractSymbols(p).unique.length);
     }
     if (symCount[1] == symCount[0]) {
+        // TODO: check that the same symbols are present, doesn't matter rn ig
         // No information is lost, is reversible
         let newname = "Reverse " + name;
         equivalences[newname] = [
@@ -202,26 +206,88 @@ function _checkPropositionMatch_helper(x:Proposition, eq:AbstractProposition, sy
 }
 
 
-function getLegalEquivalences(prop:Proposition):string[] {
+export function getLegalEquivalences(prop:Proposition):string[] {
     let legal = [];
     for (let n in equivalences) {
         let result = canUseEquivalence(prop, equivalences[n]);
         if (result == true) {
             legal.push(n);
-        } else {
-            //legal.push(n + "   " + result)
         }
     }
     return legal;
 }
 
 
+type SymbolMap = { P?:Proposition, Q?:Proposition, R?:Proposition }
+function buildSymbolMap(p:Proposition, abs_p:AbstractProposition): SymbolMap {
+    // Assume Mappable
+    let map: SymbolMap = {}
+    if (typeof abs_p == 'object') {
+        let iN = 0;
+        for (let item of abs_p) {
+            // An item in the abs_p can either be a symbol or string or object
+            // if its a symbol or object, then it has a correlating proposition, recurse
+            // if string, check for idential object
+            if (typeof item == 'string') {
+                // confirm same string real prop
+                let samestr = item == p[iN];
+                if (!samestr) { throw new Error('Abstract proposition and real proposition do not match: \n'+ abs_p+"\n"+ p); }
+            } else {
+                let submap = buildSymbolMap(p[iN], item);
+                for (let k in submap) {
+                    if (submap[k] != undefined) {
+                        if (map[k]) {
+                            if (!areEquivalentSymbols(map[k], submap[k])) { 
+                                throw new Error('Abstract proposition and real proposition do not match: \n'+ abs_p+"\n"+ p);
+                            }
+                        } else {
+                            console.log("ready")
+                            map[k] = submap[k];
+                        }
+                    }
+                    
+                }
+                console.log("-")
+                console.log(submap)
+                console.log(map);
+            }
+            iN++;
+        }
+    } else {
+        map[abs_p] = p;
+    }
+    console.log(map);
+    return map;
+}
+
+function buildMappedProposition(abs_p:AbstractProposition, map:SymbolMap): Proposition {
+    if (typeof abs_p == 'object') {
+        let prop = [];
+        for (let item of abs_p) {
+            if (typeof item == 'string') {
+                prop.push(item);
+            } else {
+                prop.push(buildMappedProposition(item, map));
+            }
+        }
+        return prop as any;
+    } else {
+        console.log(map[abs_p])
+        return map[abs_p];
+    }
+}
+
+export function performEquivalenceSwap(p:Proposition, rule:Equivalence):Proposition {
+    // Check
+    if (!canUseEquivalence(p, rule)) { throw new Error("Invalid equivalence for given proposition."); }
+
+    let map = buildSymbolMap(p, rule[0]);
+    console.log(map);
+    let prop = buildMappedProposition(rule[1], map);
+    return prop;
+}
 
 
-//try { checkPropositionMatch(source, [P,"A",P]); } catch(e) { console.log(e); }
-//try { checkPropositionMatch(source2, [P,"A",P]); } catch(e) { console.log(e); }
 
-let [p, q, r] = ["p", "q", "r"];
-let test:Proposition = [[p,"V",["-",p]],"->",["-",[q,"V",["-",q]]]];
-console.log(express_str(test));
-console.log(getLegalEquivalences(test));
+
+
