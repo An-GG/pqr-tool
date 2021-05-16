@@ -121,8 +121,11 @@ function cli() {
                 console.log(express_abstract_equivalence_str(eq[0]) + " = " + express_abstract_equivalence_str(eq[1]) + "\n");
 
                 let newprop = performEquivalenceSwap(selectedProp, eq);
-                console.log(newprop);
-                express_str(newprop);
+                
+                // Swap Selection
+                let swapped = swapSubpropositionWith(activeProp, selection, newprop);
+                console.log(express_str(swapped));
+
             }
         }
         
@@ -167,6 +170,22 @@ function getSubproposition(p:Proposition, n:PartitionSelection):Proposition {
         throw new Error("Requested subproposition out of range.");
     }
 }
+
+function swapSubpropositionWith(p:Proposition, at:PartitionSelection, swap:Proposition): Proposition {
+    let newprop: typeof p = JSON.parse(JSON.stringify(p));
+    let swapref = newprop;
+    if (at.length == 0) {
+        return swap;
+    }
+    let last = at.pop();
+    if (at.length > 1) {
+        swapref = getSubproposition(p, at);
+    } else {
+        (swapref[last] as any) = swap;
+    }
+    return newprop;
+}
+
 
 export function express_str(p:Proposition):string {
     if (typeof p == 'string') { return p; }

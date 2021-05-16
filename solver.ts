@@ -218,10 +218,10 @@ export function getLegalEquivalences(prop:Proposition):string[] {
 }
 
 
-type SymbolMap = { P?:Proposition, Q?:Proposition, R?:Proposition }
+type SymbolMap = { [P]?:Proposition, [Q]?:Proposition, [R]?:Proposition }
 function buildSymbolMap(p:Proposition, abs_p:AbstractProposition): SymbolMap {
     // Assume Mappable
-    let map: SymbolMap = {}
+    let map: SymbolMap = { [P]:undefined, [Q]:undefined, [R]:undefined }
     if (typeof abs_p == 'object') {
         let iN = 0;
         for (let item of abs_p) {
@@ -234,29 +234,17 @@ function buildSymbolMap(p:Proposition, abs_p:AbstractProposition): SymbolMap {
                 if (!samestr) { throw new Error('Abstract proposition and real proposition do not match: \n'+ abs_p+"\n"+ p); }
             } else {
                 let submap = buildSymbolMap(p[iN], item);
-                for (let k in submap) {
-                    if (submap[k] != undefined) {
-                        if (map[k]) {
-                            if (!areEquivalentSymbols(map[k], submap[k])) { 
-                                throw new Error('Abstract proposition and real proposition do not match: \n'+ abs_p+"\n"+ p);
-                            }
-                        } else {
-                            console.log("ready")
-                            map[k] = submap[k];
-                        }
-                    }
-                    
+                map = {
+                    [P]: map[P] ? map[P] : submap[P],
+                    [Q]: map[Q] ? map[Q] : submap[Q],
+                    [R]: map[R] ? map[R] : submap[R],
                 }
-                console.log("-")
-                console.log(submap)
-                console.log(map);
             }
             iN++;
         }
     } else {
         map[abs_p] = p;
     }
-    console.log(map);
     return map;
 }
 
@@ -272,7 +260,6 @@ function buildMappedProposition(abs_p:AbstractProposition, map:SymbolMap): Propo
         }
         return prop as any;
     } else {
-        console.log(map[abs_p])
         return map[abs_p];
     }
 }
@@ -282,7 +269,6 @@ export function performEquivalenceSwap(p:Proposition, rule:Equivalence):Proposit
     if (!canUseEquivalence(p, rule)) { throw new Error("Invalid equivalence for given proposition."); }
 
     let map = buildSymbolMap(p, rule[0]);
-    console.log(map);
     let prop = buildMappedProposition(rule[1], map);
     return prop;
 }
