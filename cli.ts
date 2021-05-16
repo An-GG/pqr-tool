@@ -119,12 +119,23 @@ function cli() {
                 
                 let eq = equivalences[legalEqName];
                 console.log(express_abstract_equivalence_str(eq[0]) + " = " + express_abstract_equivalence_str(eq[1]) + "\n");
-
-                let newprop = performEquivalenceSwap(selectedProp, eq);
                 
+                let newprop = performEquivalenceSwap(selectedProp, eq);
                 // Swap Selection
                 let swapped = swapSubpropositionWith(activeProp, selection, newprop);
-                console.log(express_str(swapped));
+
+                let before = express_str_around(activeProp, selection);
+                let after = express_str_around(swapped, selection);
+                
+                // Switch modes
+                selection = [];
+                activeProp = swapped;
+                selectedProp = activeProp;
+                selectedEqString = "";
+                currentMode = "SELECT_PROP";
+
+                console.log("Active Proposition:\n")
+                printSelection();
 
             }
         }

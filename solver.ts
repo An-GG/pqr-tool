@@ -162,17 +162,7 @@ function checkPropositionMatch(x:Proposition, eq:AbstractProposition): boolean {
     let symbolProps:SymbolProps = { [P]:[], [Q]:[], [R]:[] };    
     let helper_result = _checkPropositionMatch_helper(x, eq, symbolProps);
     
-    // Make sure all are equal within symbol
-    for (let sym in symbolProps) {
-        if (symbolProps[sym].length > 0) {
-            for (let p in symbolProps[sym]) {
-                if (!areEquivalentSymbols(p, symbolProps[sym][0])) {
-                    throw new Error("Two propositions with the same symbol for this equivalence are not identical: \nA: "+
-                    JSON.stringify(p)+"\nB: "+JSON.stringify(symbolProps[sym][0]));
-                }
-            }
-        }
-    }
+    let map = buildSymbolMap(x, eq);
 
     return helper_result;
 }
@@ -231,9 +221,15 @@ function buildSymbolMap(p:Proposition, abs_p:AbstractProposition): SymbolMap {
             if (typeof item == 'string') {
                 // confirm same string real prop
                 let samestr = item == p[iN];
-                if (!samestr) { throw new Error('Abstract proposition and real proposition do not match: \n'+ abs_p+"\n"+ p); }
+                if (!samestr) { throw new Error('Abstract proposition and real proposition do not match: \n'+ JSON.stringify(abs_p)+"\n"+ JSON.stringify(p)); }
             } else {
                 let submap = buildSymbolMap(p[iN], item);
+                for (let k of [P,Q,R]) {
+                    if (map[k] && submap[k] && map[k] != submap[k]) {
+                        throw new Error("Non-identical symbolmapping!");
+                    } 
+                }
+
                 map = {
                     [P]: map[P] ? map[P] : submap[P],
                     [Q]: map[Q] ? map[Q] : submap[Q],
