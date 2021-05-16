@@ -1,7 +1,7 @@
 import { AbstractProposition, equivalences, GeneralProposition, getLegalEquivalences, performEquivalenceSwap, Proposition } from "./solver";
 import keypress from 'keypress';
 
-let activeProp:Proposition = [ ["p","->","q"],"V",["p","->","r"] ] ;
+let activeProp:Proposition = [[["-","q"],"A",["p","->","q"]],"->",["-","p"]];
 
 
 
@@ -53,13 +53,6 @@ function cli() {
                                 "\x1b[0m\x1b[1m\x1b[37m" + around[1]);
     }
 
-    function printEquivalences() {
-        console.table(getLegalEquivalences(selectedProp));
-    }
-
-    
-    
-
 
     let currentMode : "SELECT_PROP" | "SELECT_EQ" = "SELECT_PROP";
     let selection:PartitionSelection = [];
@@ -97,7 +90,7 @@ function cli() {
                 selectedEqString = "";
 
                 console.log("Select Equivalence:");
-                printEquivalences();
+                console.table(["Cancel"].concat(getLegalEquivalences(selectedProp)));
                 console.log("\n");
             }
             
@@ -113,7 +106,14 @@ function cli() {
                 setLineTo(selectedEqString);
             } else if (key && key.name == "return") {
                 // Selected Eq
-                let eqN = parseInt(selectedEqString);
+                let eqN = parseInt(selectedEqString) - 1;
+                if (eqN == -1) {
+                    console.log("\nActive Proposition:\n")
+                    currentMode = "SELECT_PROP";
+                    printSelection();
+                    return;
+                }
+
                 let legalEqName = getLegalEquivalences(selectedProp)[eqN];
                 console.log("\n\nSelected: "+selectedEqString+" "+legalEqName);
                 
@@ -123,8 +123,7 @@ function cli() {
                 let newprop = performEquivalenceSwap(selectedProp, eq);
                 // Swap Selection
                 let swapped = swapSubpropositionWith(activeProp, selection, newprop);
-                console.log(activeProp);
-                console.log(swapped);
+
                 let before = express_str_around(activeProp, selection);
                 let after = express_str_around(swapped, selection);
                 
@@ -199,8 +198,6 @@ function getSubproposition(p:Proposition, n:PartitionSelection):Proposition {
 }
 
 function swapSubpropositionWith(prop:Proposition, at:PartitionSelection, swap:Proposition): Proposition {
-    console.log(at);
-    console.log(swap);
     if (at.length == 0) { return swap; }
     let p : typeof prop = JSON.parse(JSON.stringify(prop));
     let ptype = getPropositionType(p);
